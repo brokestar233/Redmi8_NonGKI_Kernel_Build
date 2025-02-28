@@ -238,7 +238,8 @@ jobs:
       - name: Patch Kernel for no-kprobe
         run: |          
           cd $GITHUB_WORKSPACE
-          cp $GITHUB_WORKSPACE/Patches/patches.sh device_kernel/
+          wget -O patches.sh https://github.com/yu13140/Redmi8_NonGKI_Kernel_Build/raw/refs/heads/main/Patches/patches.sh 
+          cp patches.sh device_kernel/
           cd device_kernel
           bash patches.sh
 
