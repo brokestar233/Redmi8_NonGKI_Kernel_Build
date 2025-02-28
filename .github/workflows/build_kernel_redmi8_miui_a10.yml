@@ -237,8 +237,9 @@ jobs:
 
       - name: Patch Kernel for no-kprobe
         run: |
+          only_patch_path="Patches/patches.sh"
           cd $GITHUB_WORKSPACE
-          cp Patches/patches.sh device_kernel/
+          cp "$only_patch_path" device_kernel/
           cd device_kernel
           bash patches.sh
 
