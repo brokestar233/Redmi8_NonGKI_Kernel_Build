@@ -2,12 +2,15 @@
 ***
 # Non-GKI Kernel with KSU and SUSFS
 ![GitHub branch check runs](https://img.shields.io/github/check-runs/JackA1ltman/NonGKI_Kernel_Build/main)![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/JackA1ltman/NonGKI_Kernel_Build/latest/total)  
-Automatic build Non-GKI Kernel with KSU and SUSFS  
+[支持列表](Supported_Devices.md) | 中文文档 | [English](README_EN.md)  
+
+**Non-GKI**：我们常说的Non-GKI包括了GKI1.0（内核版本4.19-5.4）（5.4为QGKI）和真正Non-GKI（内核版本≤4.14）  
+
 由于Non-GKI内核存在严重的碎片化，不仅仅体现在内核无法通用，更是存在编译环境参差不齐，包括但不限于系统版本，GCC版本，Clang版本等等，因此决定开始自动化编译Non-GKI内核项目  
 本项目欢迎Fork后自行编辑使用，也欢迎增加修改后提交合并，或者成为合作伙伴  
 
 # 使用例
-## Profiles/设备名称_ROM名称.env
+## Profiles/设备代号_ROM名称.env
 总共由以下内容组成：  
 **CONFIG_ENV** - 用来表明在Action环境中具体配置文件位置  
 
@@ -23,6 +26,7 @@ Automatic build Non-GKI Kernel with KSU and SUSFS
 **CLANG_SOURCE** - Clang所在之处，但支持git、tar.gz、tar.xz  
 **CLANG_BRANCH** - Clang所需分支，但前提是git  
 
+**GCC_GNU** - 若你的内核需要GCC，但不需要自定义GCC，可通过选项启用系统提供的GNU-GCC，true或false  
 **GCC_XX_SOURCE** - GCC所在之处，但支持git、tar.gz、zip  
 **GCC_XX_BRANCH** - GCC所需分支，但前提是git  
 
@@ -43,13 +47,31 @@ Automatic build Non-GKI Kernel with KSU and SUSFS
 
 **LXC_ENABLE** - (实验性⚠)启用自动化内核LXC/Docker支持，true或false  
 
+**HAVE_NO_DTBO** - (实验性⚠)若你的内核没有提供dtbo.img，且你的设备属于A/B分区且存在dtbo分区，则可启用本选项(true)，默认为false  
+
 **ROM_TEXT** - 用于编译成功后用于上传文件标题，声明内核可用的ROM  
 
 ## .github/workflow/build_kernel_设备简称_型号_ROM_Android版本.yml
 我们编写了env和用于编译的yml的例本，接下来是对yml例本的解析  
 这里仅指出大概可供修改的地方，具体可按需求修改，我们不建议过度修改步骤和顺序  
+这是我们提供的示例文件：**codename_rom_template.env**和**build_kernel_template.yml**  
 
-- **runs-on: ubuntu-XX.XX** - 不同内核所需系统不同，默认为22.04，我们预先提供了两套包安装选项（适配22.04和24.04），我们通过检测系统版本进行决定包安装  
+- **env:** - 设置必要修改的变量，独立于Profiles
+  - **PACK_METHOD** - 打包方式，分为MKBOOTIMG，和[Anykernel3](https://github.com/osm0sis/AnyKernel3)，默认为Anykernel3
+  - **KERNELSU_METHOD** - 嵌入KernelSU的方式：
+    - 通常情况下使用**shell**方式即可
+    - 但如果你提供了非setup.sh的方式，或者该方式报错，请将其修改**manual**，manual虽然是手动安装，但实际上并不需要维护者修改任何内容
+    - 若你的内核已经存在KernelSU，但你想要替换，可使用**only**，仅执行git不执行修补
+  - **PATCHES_SOURCE** - 使用susfs不可避免需要手动修补，这是用来填写你存放patch的github项目地址，当然如果你不采用susfs，则不需要填写，可参考我的用于Patch的git项目
+  - **PATCHES_BRANCH** - patch项目所需的分支，一般为main
+  - **HOOK_METHOD** - 我们提供了两种方式用于KernelSU手动修补：
+    - **normal**代表最常见的修补方式，一般不会出问题
+    - [vfs](https://github.com/backslashxx/KernelSU/issues/5)是最新的最小化修补方式，似乎会提高隐藏，但是在低版本clang下可能会有ISO编译规范问题，且对于版本≤4.9的内核的支持存在问题，仅更高版本内核建议启用
+  - **PROFILE_NAME** - 填写成你修改好的env环境变量文件的名称，例如codename_rom_template.env
+  - **KERNELSU_SUS_PATCH** - 如果你的KernelSU不属于KernelSU-Next，并且也没有针对SuSFS的修补分支，可以启用该项目（true），但我们不建议这么做，因为分支KernelSU的魔改情况严重，手动修补已经不能顺应现在的时代了
+
+- **runs-on: ubuntu-XX.XX** 
+  - 不同内核所需系统不同，默认为22.04，我们预先提供了两套包安装选项（适配22.04和24.04），我们通过检测系统版本进行决定包安装
 
 - **Set Compile Environment**
   - 这里分为无GCC和有GCC，Clang也有区分判定，请继续往下看
@@ -59,19 +81,23 @@ Automatic build Non-GKI Kernel with KSU and SUSFS
 
 - **Set Pack Method and KernelSU and SUSFS**
   - 我们默认提供Anykernel3和MKBOOTIMG两种打包方式，其中AK3可以自动检测内核源码中是否存在，若不存在则调用env提供的SOURCE和BRANCH，对于AK3仅提供git方式，MKBOOTIMG由我们默认提供，一般不需要自行获取
-  - 有关KernelSU，我们提供了执行setup.sh一键脚本的方式，但我们在一次意外中发现该脚本在某些环境下会出现git错误，因此我们提供了手动安装的方式。虽然是手动安装，但实际上并不需要维护者修改任何内容
-  - yml文件中变量PACK_METHOD和KERNELSU_METHOD分别对应，打包方式（条1）和KernelSU调用方式（条2），变量可设定值参考yml文件对应位置
+  - **Anykernel3** 需要提供对应项目的地址和分支，且仅支持git方式，或者使用我们提供的默认方式，一般不会出错
+  - **MKBOOTIMG** 需要提供干净的原始内核镜像文件，我们建议使用Github raw地址
 
-- **Extra Kernel Options** - 有些内核编译时需要提供更多设置项  
+- **Extra Kernel Options** 
+  - 有些内核编译时需要提供更多设置项
+  - 通常为针对defconfig文件的补充项，但的确，有些完善的内核其实并不需要额外的设置项，不需要就把该模块中所有内容注释掉即可跳过
 
+- **Added mkdtboimg to kernel (Experiment)** 
+  - 如你所见，很多内核，或者说大部分内核都不需要该功能，有些内核例如nameless虽然没有dtbo,但实际上他的确不需要。而且仅限A/B分区的设备，且存在危险性，例如加上dtbo反而无法启动设备等等，三思而后行
+
+- **Setup LXC (Experiment)** 
+  - 自动部署LXC，但许多内核并不支持该方式，可用于Fork后自行尝试，在本人的官方编译中应该不会选择支持LXC
+  
 - **Patch Kernel**
-  - 分为两个部分，主要的SUSFS修补和补充修补
+  - 分为两个部分，主要的SUSFS修补和补充修补（Patch Kernel of SUSFS 和 Fixed Kernel Patch）
   - 一切基于env中SUSFS_ENABLE和env.SUSFS_FIXED为true，但不一定都为true
   - SUSFS修补大概率会产生问题，因此通常情况下需要补充修补
-  - 在Set Pack Method and KernelSU and SUSFS步骤中，涉及到一个变量KERNEL_PATCHES，用于指向你的用于patch的git项目，可参考我的用于Patch的git项目
-  - 补充修补需要执行你重新制作的patch补丁
-
-- **Make [Pack Method]**
-  - 这一步分为AK3和MKBOOTIMG，受到Set Pack Method and KernelSU and SUSFS步骤中的变量控制，若无特殊需要，请使用我们提供的打包方案即可<br>
-  - MKBOOTIMG的方式可能会导致无法启动设备，我们对此有疑问，所以若可行尽可能使用AK3方式
-  - MKBOOTIMG需要提供干净的原始内核镜像文件，我们建议使用Github raw地址
+  - 补充修补需要执行你重新制作的patch补丁（步骤为：Fixed Kernel Patch）
+  
+最后提醒⚠️：非上述提示的步骤理论上不需要你做任何修改，我已经尽可能实现多情况判定
