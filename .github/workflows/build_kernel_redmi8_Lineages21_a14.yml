@@ -1,4 +1,4 @@
-name: Build Kernel Oneplus 8T (Based-AOSP A15) with KSU and SUSFS
+name: Build Kernel Redmi8 (LineageOS 21) with KSU and SUSFS
 on:
   workflow_call:
   workflow_dispatch:
