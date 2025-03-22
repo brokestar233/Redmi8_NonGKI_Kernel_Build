@@ -1,4 +1,4 @@
-name: Build Kernel Redmi 8 (MIUI Global 12.5.2) with KSU
+name: Build Kernel Redmi 8 (LineageOS 21) with KSU and Susfs
 on:
   workflow_call:
   workflow_dispatch:
