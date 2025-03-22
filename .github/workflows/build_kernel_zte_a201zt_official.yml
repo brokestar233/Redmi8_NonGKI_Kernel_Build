@@ -1,4 +1,4 @@
-name: Build Kernel Template (Cannot be used for compilation directly)
+name: Build Kernel ZTE A201ZT (Official) with KSU and SUSFS
 on:
   workflow_call:
   workflow_dispatch:
@@ -8,13 +8,13 @@ env:
   PATCHES_SOURCE: "author/source" # [your_name]/[your_patch] -> gooder123/NonGKI_Patcher
   PATCHES_BRANCH: "branch" # [your_branch] -> main
   HOOK_METHOD: "normal" # manual hook method,can choice vfs and normal.
-  PROFILE_NAME: "codename_rom_template.env" # your profile name.
+  PROFILE_NAME: "zte_a201zt_official.env" # your profile name.
   KERNELSU_SUS_PATCH: "false" # if u need manual susfs patch to kernelsu.
 
 jobs:
   build:
     name: Build Kernel by ${{ github.actor }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
@@ -194,7 +194,12 @@ jobs:
       - name: Get Kernel Source
         run: |
           cd $GITHUB_WORKSPACE
-          git clone --recursive ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_BRANCH }} device_kernel --depth=1
+          # git clone --recursive ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_BRANCH }} device_kernel --depth=1
+          wget -O more_files.tar.gz "${{ env.KERNEL_SOURCE }}"
+          mkdir more_files
+          tar -C more_files/ -zxvf more_files.tar.gz
+          mv more_files/Z3150S/kernel-4.19 more_files/Z3150S/device_kernel
+          mv more_files/Z3150S/device_kernel ./
           if [[ -n "${{ env.DEFCONFIG_SOURCE }}" ]]; then
             wget ${{ env.DEFCONFIG_SOURCE }} -O device_kernel/arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           fi
@@ -307,7 +312,8 @@ jobs:
                   bash normal_patches.sh
                   echo "execuated patch successfully."
                   if [ $KERNEL -lt 5 ] && [ $PATCHLEVEL -lt 14 ]; then
-                      cp /tmp/Patches/extra_patches.sh ./
+                      cp /tmp/Patches/extra_patches.sh device_kernel/
+                      cd device_kernel
                       bash extra_patches.sh
                       echo "execuated extra patch successfully."
                   else
@@ -324,7 +330,8 @@ jobs:
                   bash vfs_hook_patches.sh
                   echo "execuated vfs patch successfully."
                   if [ $KERNEL -lt 5 ] && [ $PATCHLEVEL -lt 14 ]; then
-                      cp /tmp/Patches/extra_patches.sh ./
+                      cp /tmp/Patches/extra_patches.sh device_kernel/
+                      cd device_kernel
                       bash extra_patches.sh
                       echo "execuated extra patch successfully."
                   else
@@ -349,6 +356,8 @@ jobs:
           # echo "CONFIG_LTO_NONE=y" >> ./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           # echo "CONFIG_INIT_STACK_NONE=y" >> ./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           # sed -i 's/# CONFIG_SECCOMP is not set/CONFIG_SECCOMP=y/' ./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
+          wget https://raw.githubusercontent.com/JackA1ltman/NonGKI_Kernel_Patches/refs/heads/zte_kernel/download.sh -O download.sh
+          bash download.sh
 
       - name: Added mkdtboimg to kernel (Experiment)
         if: env.HAVE_NO_DTBO == 'true'
@@ -496,6 +505,8 @@ jobs:
           cp -fp tmp/tmp.zip ${{ env.DEVICE_CODENAME }}-${{ env.ROM_TEXT }}-$TIME-${{ env.PACK_METHOD }}${{ env.LXC_STATUS }}.zip
           rm -rf tmp
 
+          ls -al ./
+
           echo "PACK_NAME=${{ env.DEVICE_CODENAME }}-${{ env.ROM_TEXT }}-$TIME-${{ env.PACK_METHOD }}${{ env.LXC_STATUS }}.zip" >> $GITHUB_ENV
 
       - name: Make Latest Boot Image
@@ -528,18 +539,9 @@ jobs:
 
           rm -f $GITHUB_WORKSPACE/boot_source_${{ env.DEVICE_NAME }}.img
 
-      - name: Upload Build Artifacts For Boot Image
-        if: env.PACK_METHOD == 'Anykernel3'
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Kernel-${{ env.PACK_NAME }}
           path: |
             device_kernel/${{ env.PACK_NAME }}
-
-      - name: Upload Build Artifacts For Anykernel3
-        if: env.PACK_METHOD == 'MKBOOTIMG'
-        uses: actions/upload-artifact@v4
-        with:
-          name: Kernel-${{ env.PACK_NAME }}
-          path: |
-            ${{ env.PACK_NAME }}
