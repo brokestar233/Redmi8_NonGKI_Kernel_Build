@@ -84,6 +84,7 @@ jobs:
         | Redmi K20 Pro (CN) | raphael | 4.14 | Based-AOSP | 15 | AnyKernel3 | Next | ✅ | ❌ | ❌ |
         | Black Shark 4 | penrose | 4.19 | MIUI/JoyUI 12 | 11 | AnyKernel3 | Next | ❌ | ❌ | ✅ |
         | Xiaomi 10S | thyme | 4.19 | Based-AOSP | 15 | AnyKernel3 | Next | ✅ | ❌ | ❌ |
+        | Redmi 8 | olive | 4.19 | LineageOS 21 | 14 | AnyKernel3 | SukiSU | ✅ | ❌ | ✅ |
 
         - OnePlus 8 (CN) has been tested and can be used on the OnePlus 9R. Theoretically, it should also work on the OnePlus 8T/8Pro.
         - The Black Shark 4 cannot patch SuSFS due to a kernel defect (missing ANDROID_KABI). To enhance stealth and security, it is the first device to switch from the regular manual hook to [VFS Hook](https://github.com/backslashxx/KernelSU/issues/5).
