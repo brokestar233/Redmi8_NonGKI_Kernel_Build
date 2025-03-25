@@ -431,10 +431,10 @@ jobs:
           cp NonGKI_Kernel_Patches/kona_oos/ksu_backport.patch ./
           wget https://ghfast.top/https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/main/4.19/ksu_hooks_sukisu_4.19.patch
                     
-          patch -p1 < namespace_fixed.patch || true
-          patch -p1 < task_mmu_fixed.patch || true
-          patch -p1 < ksu_backport.patch || true
-          patch -p1 < ksu_hooks_sukisu_4.19.patch || true
+          patch -R -p1 < namespace_fixed.patch || true
+          patch -R -p1 < task_mmu_fixed.patch || true
+          patch -R -p1 < ksu_backport.patch || true
+          patch -R -p1 < ksu_hooks_sukisu_4.19.patch || true
                              
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
