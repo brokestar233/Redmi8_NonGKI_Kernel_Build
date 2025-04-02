@@ -1,11 +1,15 @@
 # Non-GKI Kernel with KSU and SUSFS
 ![GitHub branch check runs](https://img.shields.io/github/check-runs/JackA1ltman/NonGKI_Kernel_Build/main)![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/JackA1ltman/NonGKI_Kernel_Build/latest/total)  
-[支持列表](Supported_Devices.md) | 中文文档 | [English](README_EN.md)  
+[支持列表](Supported_Devices.md) | 中文文档 | [English](README_EN.md) | [更新日志](Updated.md)  
+
+**Ver**.1.3
 
 **Non-GKI**：我们常说的Non-GKI包括了GKI1.0（内核版本4.19-5.4）（5.4为QGKI）和真正Non-GKI（内核版本≤4.14）  
 
 由于Non-GKI内核存在严重的碎片化，不仅仅体现在内核无法通用，更是存在编译环境参差不齐，包括但不限于系统版本，GCC版本，Clang版本等等，因此决定开始自动化编译Non-GKI内核项目  
 本项目欢迎Fork后自行编辑使用，也欢迎增加修改后提交合并，或者成为合作伙伴  
+
+**切换其他KernelSU分支**：仅需要在当前设备下安装新KernelSU分支的APK安装包后，刷入修改过分支的内核，即可实现无缝切换KernelSU分支  
 
 # 使用例
 ## Profiles/设备代号_ROM名称.env
@@ -30,6 +34,7 @@
 
 **DEFCONFIG_SOURCE** - 若有自定义DEFCONFIG文件需求可提供具体文件所在地址  
 **DEFCONFIG_NAME** - 不管是否自定义，都需要提供用于编译的必要DEFCONFIG文件，通常格式为：设备_defconfig、vendor/设备_defconfig  
+**DEFCONFIG_ORIGIN_IMAGE** - (实验性⚠)若你不需要内核源码中自带的DEFCONFIG，也无法提供自定义DEFCONFIG，则可以通过你所获取到的Image文件（Image.gz和Image.gz-dtb需要自行解压后上传文件）进行解包后获得defconfig文件，**DEFCONFIG_NAME**一定要填写，这不能为空
 
 **KERNELSU_SOURCE** - 你可以自行设定KernelSU的来源，通常情况下是setup.sh。但有需求可启用手动安装的方式，此时则为git  
 **KERNELSU_BRANCH** - 提供KernelSU的所属分支  
@@ -52,13 +57,15 @@
 ## .github/workflow/build_kernel_设备简称_型号_ROM_Android版本.yml
 我们编写了env和用于编译的yml的例本，接下来是对yml例本的解析  
 这里仅指出大概可供修改的地方，具体可按需求修改，我们不建议过度修改步骤和顺序  
+本项目提供的所有补丁均不能保证在≤4.4内核能够正常使用  
 这是我们提供的示例文件：**codename_rom_template.env**和**build_kernel_template.yml**  
 
 - **env:** - 设置必要修改的变量，独立于Profiles
+  - **PYTHON_VERSION** - Ubuntu的Python命令默认为Python3，但2仍有需求，因此增加该变量，可填写**2**或**3**。如果你仅仅需要安装python2但不想修改默认python，那你可以在EXTRA_CMDS中增加PYTHON=/usr/bin/python2，便可以强制执行python2参与编译
   - **PACK_METHOD** - 打包方式，分为MKBOOTIMG，和[Anykernel3](https://github.com/osm0sis/AnyKernel3)，默认为Anykernel3
   - **KERNELSU_METHOD** - 嵌入KernelSU的方式：
     - 通常情况下使用**shell**方式即可
-    - 但如果你提供了非setup.sh的方式，或者该方式报错，请将其修改**manual**，manual虽然是手动安装，但实际上并不需要维护者修改任何内容
+    - 但如果你提供了非setup.sh的方式，或者该方式报错，请将其修改**manual**，manual虽然是手动安装，但实际上并不需要维护者修改任何内容，但注意，选该模式仅能使用git
     - 若你的内核已经存在KernelSU，但你想要替换，可使用**only**，仅执行git不执行修补
   - **PATCHES_SOURCE** - 使用susfs不可避免需要手动修补，这是用来填写你存放patch的github项目地址，当然如果你不采用susfs，则不需要填写，可参考我的用于Patch的git项目
   - **PATCHES_BRANCH** - patch项目所需的分支，一般为main
@@ -67,6 +74,9 @@
     - [vfs](https://github.com/backslashxx/KernelSU/issues/5)是最新的最小化修补方式，似乎会提高隐藏，但是在低版本clang下可能会有ISO编译规范问题，且对于版本≤4.9的内核的支持存在问题，仅更高版本内核建议启用
   - **PROFILE_NAME** - 填写成你修改好的env环境变量文件的名称，例如codename_rom_template.env
   - **KERNELSU_SUS_PATCH** - 如果你的KernelSU不属于KernelSU-Next，并且也没有针对SuSFS的修补分支，可以启用该项目（true），但我们不建议这么做，因为分支KernelSU的魔改情况严重，手动修补已经不能顺应现在的时代了
+  - **GENERATE_DTB** - 如果你的内核编译后，需要DTB文件（不是.dtb、.dtb、.dtsi），则可以开启本项自动执行生成DTB步骤，仅限Anykernel3打包方式
+  - **GENERATE_CHIP** - 生成DTB文件的对应设备CPU，通常支持qcom、mediatek，但我们不确定其他CPU是否支持
+  - **BUILD_DEBUGGER** - 若需要提供出错时的报告可使用该选项，目前提供patch错误rej文件的输出，其他功能可期待未来更新
 
 - **runs-on: ubuntu-XX.XX** 
   - 不同内核所需系统不同，默认为22.04，我们预先提供了两套包安装选项（适配22.04和24.04），我们通过检测系统版本进行决定包安装
@@ -75,6 +85,7 @@
   - 这里分为无GCC和有GCC，Clang也有区分判定，请继续往下看
   - 若无GCC，则会自动选择仅Clang，而通常情况下，仅Clang可用于使用antman进行管理的Clang，这些步骤我们都已经可以自动识别，因此不需要修改yml来实现
   - 若有GCC，则需填写GCC 64位和32位的版本，对于GCC我们建议git形式，但同时支持tar.gz和zip
+  - 你可以选择仅使用GCC而不启用Clang，并且GCC允许使用系统默认安装的GCC，可在yaml文件变量中开启
   - 根据本人的使用情况，我们对于Clang支持为git、tar.gz、tar.xz、zip以及上述提到的antman管理软件
 
 - **Get Kernel Source**
