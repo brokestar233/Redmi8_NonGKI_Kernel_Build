@@ -65,6 +65,8 @@ jobs:
           for CONFIG in "${CONFIG_LIST[@]}"; do
               if [[ "$CONFIG" == "EXTRA_CMDS" || "$CONFIG" == "CUSTOM_CMDS" ]]; then
                   echo "$CONFIG=$(grep -w "$CONFIG" "$CONFIG_ENV" | head -n 1 | cut -d ":" -f 2)" >> $GITHUB_ENV
+                  sudo apt-get install -y build-essential flex bison libssl-dev
+                  sudo apt-get install -y lld
               else
                   echo "$CONFIG=$(grep -w "$CONFIG" "$CONFIG_ENV" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
               fi
