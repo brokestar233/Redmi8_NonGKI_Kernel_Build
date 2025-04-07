@@ -492,6 +492,10 @@ jobs:
 
       - name: Build Kernel
         run: |
+          which aarch64-linux-android-objdump
+          which aarch64-linux-android-objcopy
+          which aarch64-linux-android-ar
+          which aarch64-linux-android-nm
           export PATH=$GITHUB_WORKSPACE/clang-custom/bin:$PATH
           cd $GITHUB_WORKSPACE/device_kernel/
           make clean
