@@ -164,7 +164,7 @@ jobs:
               unzip gcc-64.zip -d gcc-64/
             fi
             GCC_64_BIN=aarch64-linux-android-
-            echo "GCC_64=CROSS_COMPILE=$GITHUB_WORKSPACE/gcc-64/bin/$GCC_64_BIN" >> $GITHUB_ENV          
+            echo "GCC_64=CROSS_COMPILE=$GITHUB_WORKSPACE/gcc-64/bin/$GCC_64_BIN" >> $GITHUB_ENV
           fi
 
 
@@ -191,7 +191,7 @@ jobs:
               unzip gcc-32.zip -d gcc-32/
             fi
             GCC_32_BIN=arm-linux-androideabi-
-            echo "GCC_32=CROSS_COMPILE_ARM32=$GITHUB_WORKSPACE/gcc-32/bin/$GCC_32_BIN" >> $GITHUB_ENV           
+            echo "GCC_32=CROSS_COMPILE_ARM32=$GITHUB_WORKSPACE/gcc-32/bin/$GCC_32_BIN" >> $GITHUB_ENV
           fi
 
           # Set Clang
@@ -217,7 +217,7 @@ jobs:
             bash antman -S
           else
             echo "You needn't clang!"
-          fi                            
+          fi
 
       - name: Get Kernel Source
         run: |
@@ -491,9 +491,9 @@ jobs:
           max-size: 2G
 
       - name: Build Kernel
-        run: |          
+        run: |
           export PATH=$GITHUB_WORKSPACE/clang-custom/bin:$PATH
-          cd $GITHUB_WORKSPACE/device_kernel/          
+          cd $GITHUB_WORKSPACE/device_kernel/
           if [ -z "${{ env.GCC_32 }}" ] && [ -z "${{ env.GCC_64 }}" ]; then
             make CC="ccache clang" O=out ARCH=arm64 ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.DEFCONFIG_NAME }}
             make -j$(nproc --all) CC="ccache clang" O=out ARCH=arm64 ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }}
