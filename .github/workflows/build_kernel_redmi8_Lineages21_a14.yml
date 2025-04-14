@@ -16,7 +16,7 @@ env:
   KPM_PATCH_SOURCE: "" # patch exec file source -> raw.githubusercontent.com/Test/Test/patch .
   GENERATE_DTB: "false" # if u kernel need DTB , but cannot auto generate it. (Only Anykernel3).
   GENERATE_CHIP: "qcom" # only supported for qcom and mediatek.
-  BUILD_DEBUGGER: "false" # Output build errors.
+  BUILD_DEBUGGER: "true" # Output build errors.
   BUILD_OTHER_CONFIG: "false" # Merge config files.
 
 
@@ -485,6 +485,14 @@ jobs:
             patch -p1 < 10_enable_susfs_for_ksu.patch || true
           fi
 
+      - name: Fixed Kernel Patch
+        if: env.SUSFS_ENABLE == 'true' && env.SUSFS_FIXED == 'true'
+        run: |
+          cd $GITHUB_WORKSPACE/device_kernel/
+          cp NonGKI_Kernel_Patches/4.19/ksu_hooks_sukisu_4.19.patch ./
+
+          patch -p1 < ksu_hooks_sukisu_4.19.patch || true
+          
       - name: Patch Debugger
         if: env.BUILD_DEBUGGER == 'true'
         run: |
@@ -499,15 +507,7 @@ jobs:
                 echo "==========EOF=========="
             done
             false
-          fi
-
-      - name: Fixed Kernel Patch
-        if: env.SUSFS_ENABLE == 'true' && env.SUSFS_FIXED == 'true'
-        run: |
-          cd $GITHUB_WORKSPACE/device_kernel/
-          cp NonGKI_Kernel_Patches/4.19/ksu_hooks_sukisu_4.19.patch ./
-
-          patch -p1 < ksu_hooks_sukisu_4.19.patch || true
+          fi          
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
