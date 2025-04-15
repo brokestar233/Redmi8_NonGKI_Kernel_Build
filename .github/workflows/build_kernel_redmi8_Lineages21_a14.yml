@@ -580,8 +580,9 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/device_kernel/
           IMAGE_DIR="$GITHUB_WORKSPACE/device_kernel/out/arch/arm64/boot"
+          sudo apt install gcc-9
           sudo apt install libstdc++6
-
+         
           if [[ -f "$IMAGE_DIR/Image.gz-dtb" ]]; then
               MODE="gz-dtb"
           elif [[ -f "$IMAGE_DIR/Image.gz" ]]; then
