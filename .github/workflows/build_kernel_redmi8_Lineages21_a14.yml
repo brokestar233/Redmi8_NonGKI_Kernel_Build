@@ -486,8 +486,9 @@ jobs:
           fi
 
       - name: Fixed Kernel Patch
-        if: env.SUSFS_ENABLE == 'true' && env.SUSFS_FIXED == 'true'
+        if: env.SUSFS_FIXED == 'true'
         run: |
+          git clone https://github.com/${{ env.PATCHES_SOURCE }}.git -b ${{ env.PATCHES_BRANCH }} NonGKI_Kernel_Patches --depth=1
           cd $GITHUB_WORKSPACE/device_kernel/
           cp NonGKI_Kernel_Patches/4.19/ksu_hooks_sukisu_4.19.patch ./
 
