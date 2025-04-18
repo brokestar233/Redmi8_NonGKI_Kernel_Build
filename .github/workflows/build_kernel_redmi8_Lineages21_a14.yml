@@ -212,6 +212,10 @@ jobs:
             wget -O clang.tar.gz ${{ env.CLANG_SOURCE }}
             mkdir clang-custom
             tar -C clang-custom/ -zxvf clang.tar.gz
+          elif [[ "${{ env.CLANG_SOURCE }}" == *'.tar.zst' ]]; then
+            wget -O clang.tar.zst ${{ env.CLANG_SOURCE }}
+            mkdir clang-custom
+            tar --use-compress-program=unzstd -xvf clang.tar.zst -C clang-custom/
           elif [[ "${{ env.CLANG_SOURCE }}" == *'.tar.xz' ]]; then
             wget -O clang.tar.xz ${{ env.CLANG_SOURCE }}
             mkdir clang-custom
